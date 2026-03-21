@@ -1,0 +1,42 @@
+# Python bytecode/cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local environment files
+.env
+.env.*
+
+# Runtime/test artifacts
+logs/
+*.log
+playwright-report/
+test-results/
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local database runtime sidecars
+*.db-wal
+*.db-shm
+atelier.db
+
+# Local runtime data
+backups/
+releases/
+dress_images/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/

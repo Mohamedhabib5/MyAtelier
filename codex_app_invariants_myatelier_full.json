@@ -1,0 +1,795 @@
+{
+  "schema_version": "1.1",
+  "project": "MyAtelier (Dash)",
+  "generated_at": "2026-03-05",
+  "purpose": "FULL behavioral constants (invariants) across the entire app that Codex must preserve. If changes are required, Codex must prove these still work via tests or explicit manual verification steps.",
+  "scope": {
+    "ui": "Dash callbacks + component IDs",
+    "data": "CRUD flows + user feedback messaging",
+    "note": "These are behavior-level guarantees; implementation may change if invariants remain true."
+  },
+  "non_negotiables": [
+    "Do not rename Dash component IDs referenced below unless all callbacks, layouts, and tests are updated and verified.",
+    "All user-triggered write actions must result in correct success/failure feedback (alerts/toasts) without silent failures.",
+    "Quick-add flows must propagate newly created entities back into the originating form (default selection behavior).",
+    "No regression in critical save/delete flows: customer, booking, payment.",
+    "Pattern-matching IDs for export (type:export-btn/grid) must remain compatible with MATCH callbacks.",
+    "Table refresh containers must always update after successful CRUD: customers-table-container, bookings-table-container, payments-table-container, dresses-table-container, services-table-container, dept-table-container.",
+    "Search inputs must clear on successful add/delete operations (entity-specific).",
+    "All user-facing Arabic labels/messages must be valid UTF-8 (no mojibake artifacts like '???').",
+    "Role-gated screens must stay enforced: users management view/nav is available only for admin role.",
+    "Global shell must remain functional: url/page-content routing and app success toast must not regress."
+  ],
+  "critical_component_ids": {
+    "stores": [
+      "user_session_store",
+      "last-added-customer"
+    ],
+    "auth": [
+      "login-btn",
+      "login-username",
+      "login-password",
+      "login-alert"
+    ],
+    "customers": [
+      "modal-customer",
+      "btn-add-customer-modal",
+      "btn-quick-add-customer",
+      "btn-save-customer",
+      "btn-edit-customer",
+      "btn-delete-customer",
+      "btn-confirm-delete",
+      "btn-cancel-delete",
+      "c-add-alert",
+      "c-search",
+      "customers-table-container"
+    ],
+    "bookings": [
+      "modal-booking",
+      "btn-add-booking-modal",
+      "btn-save-booking",
+      "btn-edit-booking",
+      "btn-delete-booking",
+      "btn-confirm-delete-b",
+      "btn-cancel-delete-b",
+      "b-customer",
+      "b-service",
+      "b-dept",
+      "b-dress",
+      "b-event-date",
+      "b-price",
+      "b-paid",
+      "b-date",
+      "b-notes",
+      "b-alert",
+      "dress-section",
+      "b-search",
+      "bookings-table-container"
+    ],
+    "payments": [
+      "modal-payment",
+      "btn-add-payment-modal",
+      "btn-edit-payment",
+      "btn-delete-payment",
+      "btn-save-payment",
+      "modal-delete-payment",
+      "btn-cancel-delete-p",
+      "btn-confirm-delete-p",
+      "p-booking",
+      "p-amount",
+      "p-date",
+      "p-notes",
+      "p-edit-id",
+      "p-alert",
+      "p-search",
+      "payments-table-container"
+    ],
+    "dresses": [
+      "modal-dress",
+      "btn-add-dress-modal",
+      "btn-edit-dress",
+      "btn-delete-dress",
+      "btn-save-dress",
+      "modal-delete-dress",
+      "btn-cancel-delete-d",
+      "btn-confirm-delete-d",
+      "d-code",
+      "d-desc",
+      "d-type",
+      "d-status",
+      "d-date",
+      "d-upload-image",
+      "d-upload-output",
+      "d-edit-id",
+      "d-alert",
+      "d-search",
+      "dresses-table-container",
+      "dresses-table"
+    ],
+    "services": [
+      "modal-service",
+      "btn-add-service-modal",
+      "btn-edit-service",
+      "btn-delete-service",
+      "btn-save-service",
+      "modal-delete-service",
+      "btn-cancel-delete-s",
+      "btn-confirm-delete-s",
+      "s-name",
+      "s-price",
+      "s-dept",
+      "s-edit-id",
+      "s-alert",
+      "s-search",
+      "services-table-container"
+    ],
+    "departments": [
+      "modal-dept",
+      "btn-add-dept-modal",
+      "btn-edit-dept",
+      "btn-delete-dept",
+      "btn-save-dept",
+      "modal-delete-dept",
+      "btn-cancel-delete-dept",
+      "btn-confirm-delete-dept",
+      "dept-name",
+      "dept-edit-id",
+      "dept-alert",
+      "dept-search",
+      "dept-table-container"
+    ],
+    "users": [
+      "users-list-container",
+      "nav-users",
+      "tab-users",
+      "view-users"
+    ],
+    "finance": [
+      "kpi-income",
+      "kpi-remaining",
+      "kpi-bookings",
+      "chart-income-daily",
+      "chart-dept-income",
+      "chart-top-services",
+      "nav-finance",
+      "tab-finance",
+      "view-finance"
+    ],
+    "settings_backup": [
+      "btn-create-backup",
+      "btn-open-backups",
+      "backup-alert",
+      "backup-open-alert",
+      "nav-settings",
+      "tab-settings",
+      "view-settings"
+    ],
+    "export": [
+      {
+        "pattern_id": {
+          "type": "export-btn",
+          "index": "*"
+        }
+      },
+      {
+        "pattern_id": {
+          "type": "grid",
+          "index": "*"
+        }
+      }
+    ],
+    "navigation": [
+      "nav-customers",
+      "nav-bookings",
+      "nav-payments",
+      "nav-dresses",
+      "nav-services",
+      "nav-settings",
+      "nav-finance"
+    ],
+    "root_shell": [
+      "url",
+      "page-content",
+      "app-success-toast",
+      "app-toast-container",
+      "main-tabs"
+    ]
+  },
+  "invariants": [
+    {
+      "id": "INV-AUTH-001",
+      "title": "Login must always show correct validation errors",
+      "trigger": "Click login-btn",
+      "expected": {
+        "if_missing_username_or_password": {
+          "component": "login-alert",
+          "type": "dbc.Alert",
+          "color": "warning",
+          "must_contain": "⚠️"
+        },
+        "if_invalid_credentials": {
+          "component": "login-alert",
+          "type": "dbc.Alert",
+          "color": "danger",
+          "must_contain": "❌"
+        },
+        "if_success": {
+          "component": "login-alert",
+          "cleared": true,
+          "store_update": "user_session_store.logged_in == True"
+        }
+      },
+      "verification": [
+        "Manual: attempt login with empty fields -> warning appears",
+        "Manual: attempt login with wrong password -> danger appears",
+        "Manual: login success -> navigates to app and alert clears"
+      ]
+    },
+    {
+      "id": "INV-CUST-001",
+      "title": "Customer save must never be silent: show warning on missing required fields",
+      "trigger": "Click btn-save-customer in modal-customer",
+      "required_fields": [
+        "c-name",
+        "c-groom",
+        "c-phone1"
+      ],
+      "expected": {
+        "modal_remains_open": true,
+        "alert": {
+          "component": "c-add-alert",
+          "type": "dbc.Alert",
+          "color": "warning",
+          "must_contain": "⚠️"
+        }
+      },
+      "verification": [
+        "Manual: open customer modal and try to save with missing fields -> warning alert displayed and modal remains open"
+      ]
+    },
+    {
+      "id": "INV-CUST-002",
+      "title": "Customer add success must close modal, refresh table, and set last-added-customer",
+      "trigger": "Successful add_customer() path from btn-save-customer when edit_id is empty",
+      "expected": {
+        "modal_closed": true,
+        "customers_table_refreshed": "customers-table-container children updated",
+        "search_cleared": "c-search == None",
+        "last_added_customer_set": "last-added-customer.data == new bride name (same value used by booking dropdown values)",
+        "alert_cleared": "c-add-alert is empty"
+      },
+      "verification": [
+        "Manual: add a new customer; modal closes; customer appears in customer table; last-added-customer updated"
+      ]
+    },
+    {
+      "id": "INV-BOOK-001",
+      "title": "Quick-add customer from Booking flow selects the new customer by default in booking form",
+      "context": "Booking modal open while a customer is added via quick add",
+      "mechanism": [
+        "Customers form sets last-added-customer.data on successful add",
+        "Bookings form listens to last-added-customer.data and updates b-customer options and value if modal-booking is open"
+      ],
+      "expected": {
+        "booking_customer_dropdown_refreshed": true,
+        "default_selected_customer": "b-customer.value == last-added-customer.data (if present in options)"
+      },
+      "verification": [
+        "Manual: open booking modal; click quick add customer; save new customer; confirm booking's customer dropdown auto-selects the new bride name",
+        "Regression test recommended: simulate store update while modal-booking.is_open == True and assert b-customer.value == new name"
+      ]
+    },
+    {
+      "id": "INV-BOOK-002",
+      "title": "Booking save must warn on missing required fields (no silent failure)",
+      "trigger": "Click btn-save-booking",
+      "required_fields": [
+        "b-customer",
+        "b-service",
+        "b-price"
+      ],
+      "expected": {
+        "modal_remains_open": true,
+        "alert": {
+          "component": "b-alert",
+          "type": "dbc.Alert",
+          "color": "warning",
+          "must_contain": "⚠️"
+        }
+      },
+      "verification": [
+        "Manual: open booking modal; clear required fields; save -> warning appears; modal stays open"
+      ]
+    },
+    {
+      "id": "INV-BOOK-003",
+      "title": "Dress booking conflicts must show a clear danger alert (normalized message)",
+      "trigger": "add_booking/update_booking returns conflict (e.g., Dress Taken)",
+      "expected": {
+        "modal_remains_open": true,
+        "alert": {
+          "component": "b-alert",
+          "type": "dbc.Alert",
+          "color": "danger",
+          "must_contain_any": [
+            "يوجد حجز",
+            "❌"
+          ]
+        }
+      },
+      "verification": [
+        "Manual: create two bookings for same dress/date -> second attempt shows danger alert explaining conflict"
+      ]
+    },
+    {
+      "id": "INV-BOOK-004",
+      "title": "Booking delete confirmation must show explicit result messaging and refresh table",
+      "trigger": "Click btn-confirm-delete-b",
+      "expected": {
+        "if_success": {
+          "table_refreshed": "get_bookings_table_content applied to bookings-table-container",
+          "success_toast": "app-success-toast opens with booking delete success message",
+          "search_cleared": "b-search == None"
+        },
+        "if_failure": {
+          "table_container_contains": [
+            "dbc.Alert color=danger",
+            "get_bookings_table_content"
+          ]
+        },
+        "if_nothing_selected": {
+          "table_container_contains": [
+            "dbc.Alert color=warning",
+            "get_bookings_table_content"
+          ]
+        }
+      },
+      "verification": [
+        "Manual: delete a booking -> success toast appears and table refreshes",
+        "Manual: attempt delete when protected by constraints -> danger alert shows reason",
+        "Manual: attempt delete with no selection -> warning alert shows instruction"
+      ]
+    },
+    {
+      "id": "INV-BOOK-005",
+      "title": "Dress section visibility follows department selection",
+      "trigger": "Change b-dept",
+      "expected": {
+        "if_department_is_dresses": "dress-section.style shows dress picker",
+        "if_not_dresses": "dress-section.style hides dress picker and booking uses dress '-'"
+      },
+      "verification": [
+        "Manual: switch dept between dresses/non-dresses -> dress picker shows/hides correctly and save behavior remains valid"
+      ]
+    },
+    {
+      "id": "INV-PAY-001",
+      "title": "Payment save must warn on missing required fields (booking + amount)",
+      "trigger": "Click btn-save-payment",
+      "required_fields": [
+        "p-booking",
+        "p-amount"
+      ],
+      "expected": {
+        "modal_remains_open": true,
+        "alert": {
+          "component": "p-alert",
+          "type": "dbc.Alert",
+          "color": "warning",
+          "must_contain": "⚠️"
+        }
+      },
+      "verification": [
+        "Manual: open payment modal; leave booking or amount empty; click save -> warning alert appears; modal stays open"
+      ]
+    },
+    {
+      "id": "INV-PAY-002",
+      "title": "Payment add success must close modal, refresh table, and clear search",
+      "trigger": "Successful add_payment() path from btn-save-payment when p-edit-id is empty",
+      "expected": {
+        "modal_closed": true,
+        "payments_table_refreshed": "payments-table-container children updated",
+        "search_cleared": "p-search == None",
+        "alert_cleared": "p-alert empty"
+      },
+      "verification": [
+        "Manual: add a payment -> modal closes, payment appears in table, p-search cleared"
+      ]
+    },
+    {
+      "id": "INV-PAY-003",
+      "title": "Payment delete confirmation must show explicit result messaging and refresh table",
+      "trigger": "Click btn-confirm-delete-p",
+      "expected": {
+        "if_success": {
+          "table_refreshed": "get_payments_table_content applied to payments-table-container",
+          "success_toast": "app-success-toast opens with payment delete success message"
+        },
+        "if_failure": {
+          "table_container_contains": [
+            "dbc.Alert color=danger",
+            "get_payments_table_content"
+          ]
+        },
+        "if_nothing_selected": {
+          "table_container_contains": [
+            "dbc.Alert color=warning",
+            "get_payments_table_content"
+          ]
+        }
+      },
+      "verification": [
+        "Manual: delete a payment -> success toast + refreshed table",
+        "Manual: attempt delete with no selection -> warning alert"
+      ]
+    },
+    {
+      "id": "INV-DRESS-001",
+      "title": "Dress save must warn on missing required fields (code + description)",
+      "trigger": "Click btn-save-dress",
+      "required_fields": [
+        "d-code",
+        "d-desc"
+      ],
+      "expected": {
+        "modal_remains_open": true,
+        "alert": {
+          "component": "d-alert",
+          "type": "dbc.Alert",
+          "color": "warning",
+          "must_contain": "⚠️"
+        }
+      },
+      "verification": [
+        "Manual: open dress modal; clear code/description; save -> warning alert"
+      ]
+    },
+    {
+      "id": "INV-DRESS-002",
+      "title": "Dress add success must close modal, refresh table, and clear search",
+      "trigger": "Successful add_dress() path from btn-save-dress when d-edit-id is empty",
+      "expected": {
+        "modal_closed": true,
+        "dresses_table_refreshed": "dresses-table-container children updated",
+        "search_cleared": "d-search == None",
+        "alert_cleared": "d-alert empty"
+      },
+      "verification": [
+        "Manual: add dress -> appears in dresses table and modal closes"
+      ]
+    },
+    {
+      "id": "INV-DRESS-003",
+      "title": "Dress image upload preview must render correctly (if image selected)",
+      "trigger": "Upload file in d-upload-image",
+      "expected": {
+        "preview_rendered": "d-upload-output shows filename/preview element",
+        "no_crash": true
+      },
+      "verification": [
+        "Manual: upload an image -> see preview/filename output; save dress -> image available in dress_images and served correctly in UI"
+      ]
+    },
+    {
+      "id": "INV-DRESS-004",
+      "title": "Dress delete confirmation must show explicit result messaging and refresh table",
+      "trigger": "Click btn-confirm-delete-d",
+      "expected": {
+        "if_success": {
+          "table_refreshed": "get_dresses_table_content applied to dresses-table-container",
+          "success_toast": "app-success-toast opens with dress delete success message"
+        },
+        "if_failure": {
+          "table_container_contains": [
+            "dbc.Alert color=danger",
+            "get_dresses_table_content"
+          ]
+        },
+        "if_nothing_selected": {
+          "table_container_contains": [
+            "dbc.Alert color=warning",
+            "get_dresses_table_content"
+          ]
+        }
+      },
+      "verification": [
+        "Manual: delete a dress not used -> success toast + refreshed table",
+        "Manual: delete a dress linked to booking -> danger alert with reason"
+      ]
+    },
+    {
+      "id": "INV-SVC-001",
+      "title": "Service save must warn on missing required fields (name required)",
+      "trigger": "Click btn-save-service",
+      "required_fields": [
+        "s-name"
+      ],
+      "expected": {
+        "modal_remains_open": true,
+        "alert": {
+          "component": "s-alert",
+          "type": "dbc.Alert",
+          "color": "warning",
+          "must_contain": "⚠️"
+        }
+      },
+      "verification": [
+        "Manual: open service modal; leave name empty; save -> warning alert"
+      ]
+    },
+    {
+      "id": "INV-SVC-002",
+      "title": "Service add success must close modal, refresh table, and clear search",
+      "trigger": "Successful add_service() path from btn-save-service when s-edit-id is empty",
+      "expected": {
+        "modal_closed": true,
+        "services_table_refreshed": "services-table-container children updated",
+        "search_cleared": "s-search == None",
+        "alert_cleared": "s-alert empty"
+      },
+      "verification": [
+        "Manual: add service -> appears in services table, modal closes"
+      ]
+    },
+    {
+      "id": "INV-SVC-003",
+      "title": "Service delete confirmation must show explicit result messaging and refresh table",
+      "trigger": "Click btn-confirm-delete-s",
+      "expected": {
+        "if_success": {
+          "table_refreshed": "get_services_table_content applied to services-table-container",
+          "success_toast": "app-success-toast opens with service delete success message"
+        },
+        "if_failure": {
+          "table_container_contains": [
+            "dbc.Alert color=danger",
+            "get_services_table_content"
+          ]
+        },
+        "if_nothing_selected": {
+          "table_container_contains": [
+            "dbc.Alert color=warning",
+            "get_services_table_content"
+          ]
+        }
+      },
+      "verification": [
+        "Manual: delete a service not used -> success toast + refreshed table",
+        "Manual: delete a service linked to bookings -> danger alert with reason"
+      ]
+    },
+    {
+      "id": "INV-DEPT-001",
+      "title": "Department save must validate name and show correct alert feedback",
+      "trigger": "Click btn-save-dept",
+      "required_fields": [
+        "dept-name"
+      ],
+      "expected": {
+        "alert_component": "dept-alert",
+        "warning_on_missing": "dbc.Alert color=warning when name missing",
+        "success_on_add_or_edit": "app-success-toast opens on successful add/update"
+      },
+      "verification": [
+        "Manual: add dept with empty name -> warning",
+        "Manual: add/edit dept with valid name -> success toast + table refreshed"
+      ]
+    },
+    {
+      "id": "INV-DEPT-002",
+      "title": "Department delete must block when referenced by services or bookings and show danger alert",
+      "trigger": "Click btn-confirm-delete-dept",
+      "expected": {
+        "if_referenced": {
+          "alert": {
+            "component": "dept-alert",
+            "type": "dbc.Alert",
+            "color": "danger",
+            "must_contain": "❌"
+          },
+          "no_delete": true
+        }
+      },
+      "verification": [
+        "Manual: attempt delete a dept used by a service/booking -> danger alert explains constraint and dept remains"
+      ]
+    },
+    {
+      "id": "INV-BACKUP-001",
+      "title": "Create backup button must produce explicit success/failure feedback",
+      "trigger": "Click btn-create-backup",
+      "expected": {
+        "on_success": {
+          "component": "backup-alert",
+          "type": "dbc.Alert",
+          "color": "success",
+          "must_contain": "✅"
+        },
+        "on_failure": {
+          "component": "backup-alert",
+          "type": "dbc.Alert",
+          "color": "danger",
+          "must_contain": "❌"
+        }
+      },
+      "verification": [
+        "Manual: click create backup -> see success alert; backup file created",
+        "Manual: simulate failure (read-only dir) -> danger alert shown"
+      ]
+    },
+    {
+      "id": "INV-FIN-001",
+      "title": "Finance KPIs render without crashing even when no data exists",
+      "trigger": "Navigate to finance tab/view",
+      "expected": {
+        "kpis_present": [
+          "kpi-income",
+          "kpi-remaining",
+          "kpi-bookings"
+        ],
+        "figures_present": [
+          "chart-income-daily",
+          "chart-dept-income",
+          "chart-top-services"
+        ],
+        "no_exceptions": true
+      },
+      "verification": [
+        "Manual: open finance view with empty DB -> KPIs show 0 values and charts render (may be empty) without callback errors"
+      ]
+    },
+    {
+      "id": "INV-FIN-002",
+      "title": "Finance totals are consistent with bookings + payments data",
+      "trigger": "Navigate to finance view after creating known bookings/payments",
+      "expected": {
+        "income_equals_paid_sum": "kpi-income reflects sum of payments",
+        "remaining_equals_price_minus_paid": "kpi-remaining reflects total remaining across bookings"
+      },
+      "verification": [
+        "Manual: create a booking price=100 and payment=40 -> remaining shows 60 and income shows 40"
+      ]
+    },
+    {
+      "id": "INV-EXPORT-001",
+      "title": "Export button triggers grid CSV export (pattern-matching IDs)",
+      "trigger": "Click any export button with id {type:'export-btn', index:X}",
+      "expected": {
+        "grid_property_set": "Output to {type:'grid', index:X}.exportDataAsCsv becomes True / truthy trigger",
+        "no_crash": true
+      },
+      "verification": [
+        "Manual: click export in any table -> CSV download/export is initiated"
+      ]
+    },
+    {
+      "id": "INV-USER-001",
+      "title": "Users screen always renders list and actions without crashing",
+      "trigger": "Navigate to users view",
+      "expected": {
+        "container_present": "users-list-container has children",
+        "no_exceptions": true
+      },
+      "verification": [
+        "Manual: open Users view -> list appears; creating/updating users does not break other screens"
+      ]
+    },
+    {
+      "id": "INV-I18N-001",
+      "title": "Arabic UI messages must remain readable (no mojibake corruption)",
+      "trigger": "Render all main tabs and open major modals",
+      "expected": {
+        "no_mojibake": true,
+        "forbidden_examples": [
+          "???",
+          "???",
+          "??",
+          "?"
+        ],
+        "scope": [
+          "layouts",
+          "alerts",
+          "toast headers",
+          "modal titles"
+        ]
+      },
+      "verification": [
+        "Manual: navigate all tabs and open CRUD modals -> all Arabic text is readable",
+        "Scripted: grep scan for mojibake signatures in app/*.py before release"
+      ]
+    },
+    {
+      "id": "INV-ROLE-001",
+      "title": "Users management screen is admin-only",
+      "trigger": "Render main layout for non-admin and admin sessions",
+      "expected": {
+        "non_admin": {
+          "nav_users_hidden_or_disabled": true,
+          "view_users_empty": true
+        },
+        "admin": {
+          "nav_users_available": true,
+          "users_list_renders": true
+        }
+      },
+      "verification": [
+        "Manual: login as non-admin -> users nav not available and users view not accessible",
+        "Manual: login as admin -> users list renders in tab-users"
+      ]
+    },
+    {
+      "id": "INV-ROOT-001",
+      "title": "Root routing shell and global success toast must stay operational",
+      "trigger": "App startup + successful booking create/edit action",
+      "expected": {
+        "root_components_present": [
+          "url",
+          "page-content",
+          "app-success-toast"
+        ],
+        "routing_works": "display_page callback updates page-content according to session",
+        "toast_works": "app-success-toast opens on successful booking save/edit"
+      },
+      "verification": [
+        "Manual: app starts and login route renders correctly",
+        "Manual: save/edit booking -> success toast appears and auto-dismisses"
+      ]
+    },
+    {
+      "id": "INV-NAV-001",
+      "title": "Side navigation and hidden tabs state must remain synchronized",
+      "trigger": "Click nav-* links and mobile shortcuts",
+      "expected": {
+        "main_tabs_sync": "main-tabs.active_tab matches selected nav item",
+        "view_sync": "only selected view-* block is visible",
+        "no_orphan_view": true
+      },
+      "verification": [
+        "Manual: switch between finance/bookings/customers/services/dresses/payments/settings/users and verify active view changes correctly"
+      ]
+    }
+  ],
+  "test_recommendations_for_codex": [
+    {
+      "id": "TEST-001",
+      "title": "Add minimal callback-level regression tests (if project adopts dash testing)",
+      "notes": [
+        "If not using dash testing, implement 'manual verification checklist' execution per release",
+        "At minimum: smoke_test + 3 manual scenarios: add customer quick-add selects in booking; booking save missing fields warns; booking delete shows correct alerts"
+      ]
+    },
+    {
+      "id": "TEST-002",
+      "title": "Add scripted UI checks (Playwright) for invariants",
+      "notes": [
+        "There is an e2e_playwright.py present; extend it with steps matching INV-BOOK-001/002/004"
+      ]
+    },
+    {
+      "id": "TEST-003",
+      "title": "Add constitution lint check in CI",
+      "notes": [
+        "Validate JSON schema and required keys (id/title/trigger/expected/verification)",
+        "Cross-check critical_component_ids against code with static scan",
+        "Fail CI on mojibake markers in app code or constitution text"
+      ]
+    }
+  ],
+  "change_policy_for_codex": {
+    "allowed_to_change": [
+      "Internal function implementations",
+      "Refactor module boundaries (e.g., split logic.py)",
+      "UI styling and layout improvements"
+    ],
+    "requires_extra_proof": [
+      "Any change touching the IDs listed in critical_component_ids",
+      "Any change touching last-added-customer store flow",
+      "Any change touching alert components or message rendering"
+    ],
+    "proof_required": [
+      "Updated tests OR updated manual verification checklist steps + evidence (logs/screenshots in PR)",
+      "Smoke test passing"
+    ]
+  }
+}

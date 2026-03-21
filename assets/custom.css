@@ -1,0 +1,555 @@
+/* Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+
+:root {
+    --primary-color: #1a202c;
+    /* More serious dark blue/black */
+    --primary-gradient: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    --secondary-color: #d69e2e;
+    /* refined gold */
+    --accent-bg: #f7fafc;
+    --surface-color: #ffffff;
+    --text-primary: #1a202c;
+    --text-muted: #718096;
+    --border-radius: 12px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    direction: rtl;
+    writing-mode: horizontal-tb;
+    text-orientation: mixed;
+}
+
+body {
+    font-family: 'Cairo', sans-serif;
+    background-color: var(--accent-bg);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    font-size: 16px;
+}
+
+.app-shell {
+    position: relative;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+    position: fixed;
+    top: 0;
+    height: 100dvh;
+    /* Dynamic Viewport Height for mobile */
+    right: 0;
+    width: 280px;
+    background: var(--primary-gradient);
+    color: white;
+    padding: 24px;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-backdrop {
+    display: none;
+}
+
+.sidebar-header h3 {
+    color: var(--secondary-color);
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.sidebar .flex-grow-1 {
+    overflow-y: auto;
+    /* Custom Scrollbar for sidebar */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.7) !important;
+    padding: 12px 18px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease-in-out;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #fff !important;
+    transform: translateX(-3px);
+}
+
+.nav-link.active {
+    background-color: var(--secondary-color);
+    color: #fff !important;
+    box-shadow: 0 4px 10px rgba(214, 158, 46, 0.4);
+}
+
+.nav-link i {
+    font-size: 1.1rem;
+}
+
+/* --- Content Area --- */
+.content {
+    margin-right: 280px;
+    padding: 30px;
+    transition: margin-right 0.3s ease;
+    min-height: 100vh;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 991.98px) {
+    .app-shell.mobile-menu-open {
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    .sidebar {
+        right: 0;
+        width: min(88vw, 320px);
+        padding: 20px;
+        transform: translateX(100%);
+    }
+
+    .sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+
+    .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.42);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+        z-index: 1040;
+    }
+
+    .sidebar-backdrop.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .content {
+        margin-right: 0;
+        padding: 18px;
+    }
+
+    .app-shell.mobile-menu-open .content {
+        height: 100dvh;
+        overflow: hidden;
+    }
+}
+
+/* --- Bottom Nav --- */
+.bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface-color);
+    border-top: 1px solid #e2e8f0;
+    height: 70px;
+    z-index: 1040;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 10px;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-nav-item {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    padding: 8px;
+    border-radius: 12px;
+    flex: 1;
+    transition: all 0.2s;
+}
+
+.bottom-nav-item i {
+    font-size: 1.5rem;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.bottom-nav-item.active {
+    color: var(--secondary-color);
+    font-weight: 700;
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .bottom-nav {
+        display: none;
+    }
+
+    .content {
+        padding-bottom: 32px;
+    }
+}
+
+@media (min-width: 992px) {
+    .bottom-nav {
+        display: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .content {
+        padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .card-body {
+        padding: 18px;
+    }
+
+    .card-header {
+        padding: 16px 18px;
+    }
+
+    .modal-body {
+        padding: 18px;
+    }
+
+    .modal-footer {
+        gap: 0.75rem;
+    }
+
+    .modal-footer .btn {
+        margin: 0 !important;
+        width: 100%;
+    }
+
+    .SingleDatePicker,
+    .SingleDatePickerInput,
+    .DateInput,
+    .DateInput_input {
+        width: 100% !important;
+    }
+
+    .DateInput_input {
+        text-align: center;
+    }
+
+    .mobile-record-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mobile-topbar {
+    top: 0;
+    z-index: 1035;
+    border-radius: 0 0 18px 18px;
+}
+
+.mobile-topbar .btn {
+    box-shadow: none !important;
+}
+
+.page-action-btn {
+    width: 100%;
+}
+
+.toolbar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.toolbar-actions .btn {
+    margin: 0 !important;
+    width: 100%;
+}
+
+.mobile-record-list {
+    display: grid;
+    gap: 16px;
+}
+
+.mobile-record-card {
+    border-radius: 18px;
+}
+
+.mobile-record-header {
+    align-items: flex-start;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.mobile-record-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.mobile-record-id {
+    color: var(--text-muted);
+    display: inline-flex;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.mobile-record-fields {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mobile-record-field {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.mobile-record-field-label {
+    color: var(--text-muted);
+    display: block;
+    font-size: 0.78rem;
+    margin-bottom: 4px;
+}
+
+.mobile-record-field-value {
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.mobile-record-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 16px;
+}
+
+.mobile-record-button,
+.table-export-btn {
+    width: 100%;
+}
+
+.desktop-table-view {
+    display: none;
+}
+
+.desktop-table-view--force {
+    display: block;
+}
+
+/* --- Cards & UI Elements --- */
+.card {
+    background-color: var(--surface-color);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s;
+    overflow: hidden;
+}
+
+.dropdown-card,
+.dropdown-card .card-body {
+    overflow: visible;
+}
+
+.dropdown-card .Select-menu-outer,
+.dropdown-card .Select-menu {
+    z-index: 2000;
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid #edf2f7;
+    padding: 18px 24px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.card-body {
+    padding: 24px;
+}
+
+/* Modals */
+.modal-content {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    background: var(--primary-color);
+    color: white;
+    border-bottom: none;
+    padding: 20px 24px;
+}
+
+.modal-title {
+    font-weight: 700;
+}
+
+.form-modal .modal-body {
+    overflow-y: auto;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Buttons */
+.btn {
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 10px 24px;
+    letter-spacing: 0.3px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border: none;
+    box-shadow: 0 4px 6px rgba(26, 32, 44, 0.2);
+}
+
+.btn-primary:hover {
+    background-color: #2d3748;
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    background-color: #38a169;
+    border: none;
+}
+
+.btn-danger {
+    background-color: #e53e3e;
+    border: none;
+}
+
+/* Grid Styling */
+.ag-theme-alpine {
+    --ag-font-family: 'Cairo', sans-serif;
+    --ag-header-height: 48px;
+    --ag-row-height: 48px;
+    --ag-header-background-color: #f8fafc;
+    --ag-header-foreground-color: var(--text-muted);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.ag-theme-alpine .ag-cell.ag-action-cell {
+    background: #0dcaf0;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.ag-theme-alpine .ag-cell.ag-action-cell:hover {
+    background: #0bb5db;
+}
+
+/* Move Dash Debug Menu out of the way */
+.dash-debug-menu__outer {
+    left: 0 !important;
+    right: auto !important;
+    bottom: 16px !important;
+}
+
+@media (max-width: 767.98px) {
+    .dash-debug-menu__outer {
+        bottom: 80px !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .page-action-btn {
+        width: auto;
+    }
+
+    .toolbar-actions {
+        align-items: center;
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+
+    .toolbar-actions .btn {
+        width: auto;
+    }
+
+    .desktop-table-view,
+    .desktop-table-view--force {
+        display: block;
+    }
+
+    .mobile-record-list {
+        display: none;
+    }
+
+    .mobile-record-actions {
+        flex-direction: row;
+    }
+
+    .mobile-record-button,
+    .table-export-btn {
+        width: auto;
+    }
+}
+
+/* AgGrid Image Styling */
+.ag-theme-alpine .ag-cell-value img {
+    height: 60px !important;
+    width: auto !important;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.ag-theme-alpine .ag-cell-value img:hover {
+    transform: scale(1.5);
+    z-index: 100;
+}
+
+/* Fail-safe for tab content visibility */
+.tab-content-div {
+    display: none;
+}
+
+/* Force visible when style is applied via Dash */
+.tab-content-div[style*="block"] {
+    display: block !important;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.table-responsive-container {
+    /* height: 600px; Remove fixed height from CSS to let inline style control */
+    /* overflow-y: hidden;  Remove hide overflow */
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Bookings payment progress text bar column */
+.ag-theme-alpine .ag-cell[col-id="مؤشر السداد"] {
+    font-family: "Cairo", monospace;
+    white-space: pre;
+    direction: ltr;
+}

@@ -1,0 +1,127 @@
+def add_booking(
+    run_synced_fn,
+    bookings_domain,
+    invalidate_after_write_fn,
+    invalidate_cache_fn,
+    *,
+    customer_name,
+    dept,
+    service,
+    dress_code,
+    event_date,
+    price,
+    paid,
+    status,
+    notes,
+    reg_date,
+    canonical_department_fn,
+    find_customer_fn,
+    find_service_fn,
+    is_no_dress_fn,
+    money_fn,
+    money_float_fn,
+    add_payment_fn,
+    dept_map,
+    booking_status_active,
+    note_booking_downpay,
+    msg_dress_booked_same_date,
+    msg_invalid_value,
+    msg_paid_gt_price,
+):
+    result = run_synced_fn(
+        bookings_domain.add_booking,
+        customer_name,
+        dept,
+        service,
+        dress_code,
+        event_date,
+        price,
+        paid,
+        status,
+        notes=notes,
+        reg_date=reg_date,
+        canonical_department_fn=canonical_department_fn,
+        find_customer_fn=find_customer_fn,
+        find_service_fn=find_service_fn,
+        is_no_dress_fn=is_no_dress_fn,
+        money_fn=money_fn,
+        money_float_fn=money_float_fn,
+        add_payment_fn=add_payment_fn,
+        dept_map=dept_map,
+        booking_status_active=booking_status_active,
+        note_booking_downpay=note_booking_downpay,
+        msg_dress_booked_same_date=msg_dress_booked_same_date,
+        msg_invalid_value=msg_invalid_value,
+        msg_paid_gt_price=msg_paid_gt_price,
+    )
+    ok = invalidate_after_write_fn(result, file_name="bookings.csv")
+    if isinstance(ok, tuple) and ok and ok[0]:
+        invalidate_cache_fn(file_name="payments.csv")
+    return ok
+
+
+def update_booking(
+    run_synced_fn,
+    bookings_domain,
+    invalidate_after_write_fn,
+    *,
+    b_id,
+    customer_name,
+    dept,
+    service,
+    dress_code,
+    event_date,
+    price,
+    paid,
+    status,
+    notes,
+    canonical_department_fn,
+    find_customer_fn,
+    find_service_fn,
+    is_no_dress_fn,
+    money_fn,
+    money_float_fn,
+    booking_status_active,
+    msg_dress_booked_same_date,
+    msg_invalid_value,
+    msg_paid_gt_price,
+):
+    result = run_synced_fn(
+        bookings_domain.update_booking,
+        b_id,
+        customer_name,
+        dept,
+        service,
+        dress_code,
+        event_date,
+        price,
+        paid,
+        status,
+        notes,
+        canonical_department_fn=canonical_department_fn,
+        find_customer_fn=find_customer_fn,
+        find_service_fn=find_service_fn,
+        is_no_dress_fn=is_no_dress_fn,
+        money_fn=money_fn,
+        money_float_fn=money_float_fn,
+        booking_status_active=booking_status_active,
+        msg_dress_booked_same_date=msg_dress_booked_same_date,
+        msg_invalid_value=msg_invalid_value,
+        msg_paid_gt_price=msg_paid_gt_price,
+    )
+    return invalidate_after_write_fn(result, file_name="bookings.csv")
+
+
+def delete_booking(
+    run_synced_fn,
+    bookings_domain,
+    invalidate_after_write_fn,
+    invalidate_cache_fn,
+    *,
+    b_id,
+):
+    result = run_synced_fn(bookings_domain.delete_booking, b_id)
+    ok = invalidate_after_write_fn(result, file_name="bookings.csv")
+    if isinstance(ok, tuple) and ok and ok[0]:
+        invalidate_cache_fn(file_name="payments.csv")
+    return ok

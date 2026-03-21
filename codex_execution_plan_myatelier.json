@@ -1,0 +1,540 @@
+{
+  "schema_version": "1.0",
+  "project": "MyAtelier (Dash)",
+  "generated_at": "2026-03-05",
+  "owner": "Mohamed Habib",
+  "goals": [
+    "Reduce risk of data corruption while improving maintainability and UX",
+    "Refactor logic.py monolith safely using a facade/strangler approach",
+    "Improve performance incrementally with caching and safer ID generation",
+    "Add baseline automated tests to prevent regressions"
+  ],
+  "global_constraints": {
+    "admin_password_task_removed": true,
+    "no_data_corruption_rules": [
+      "Create DB + images snapshot before any write-path change",
+      "Wrap all write operations in transactions; rollback on error",
+      "One logical change per commit",
+      "Run smoke test after every commit",
+      "Do not enforce schema constraints until tests exist and backfill reports are clean"
+    ],
+    "deployment_assumptions": {
+      "db_file": "atelier.db",
+      "images_dir": "dress_images/",
+      "backup_dirs": [
+        "backups/",
+        "releases/"
+      ]
+    }
+  },
+  "quality_gates": {
+    "before_any_write_path_change": [
+      "Snapshot created: atelier.db + dress_images/ (if present)",
+      "Manual backup created from Settings UI",
+      "scripts/smoke_test.py exists and passes"
+    ],
+    "before_any_schema_migration": [
+      "pytest suite exists and passes",
+      "Backfill/dry-run report generated and reviewed",
+      "Rollback verified: restore DB + checkout tag"
+    ]
+  },
+  "phases": [
+    {
+      "id": "P0",
+      "name": "Safety Setup",
+      "objective": "Add recovery points and fast validation to prevent corruption",
+      "tasks": [
+        {
+          "id": "P0-T1",
+          "title": "Create timestamped snapshot (DB + images)",
+          "type": "ops",
+          "risk": "low",
+          "steps": [
+            "Stop the app",
+            "Copy atelier.db -> snapshots/YYYYMMDD_HHMM/atelier.db",
+            "If dress_images/ exists, copy to snapshots/YYYYMMDD_HHMM/dress_images/",
+            "Start the app and create a manual backup from Settings UI"
+          ],
+          "acceptance_criteria": [
+            "Snapshot folder exists with atelier.db",
+            "Manual backup exists in backups/ (or configured backup directory)"
+          ],
+          "rollback": [
+            "Restore atelier.db from snapshot",
+            "Restore dress_images/ from snapshot if needed"
+          ]
+        },
+        {
+          "id": "P0-T2",
+          "title": "Add smoke test script (read-only)",
+          "type": "code",
+          "risk": "low",
+          "files": [
+            "scripts/smoke_test.py"
+          ],
+          "implementation_notes": [
+            "Import app module without starting server",
+            "Open SQLAlchemy session and run count queries for core tables",
+            "Exit code 0 on success; non-zero on failure",
+            "No DB writes"
+          ],
+          "acceptance_criteria": [
+            "python scripts/smoke_test.py exits 0",
+            "Prints counts for users/customers/bookings/payments",
+            "Does not modify DB (no writes)"
+          ]
+        },
+        {
+          "id": "P0-T3",
+          "title": "Repo hygiene: .gitignore + .env.example + .editorconfig",
+          "type": "code",
+          "risk": "low",
+          "files": [
+            ".gitignore",
+            ".env.example",
+            ".editorconfig"
+          ],
+          "steps": [
+            "Ignore backups/, releases/, atelier.db, dress_images/",
+            "Add .env.example documenting APP_ENV, APP_DEBUG, APP_SECRET_KEY, APP_BACKUP_RETENTION_COUNT, DATABASE_URL (optional)",
+            "Add .editorconfig to normalize line endings to LF"
+          ],
+          "acceptance_criteria": [
+            "git status does not track db/backups/images",
+            ".env.example exists",
+            "Line endings normalize in future commits"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P1",
+      "name": "Integrity Fixes (Non-admin)",
+      "objective": "Fix user-save corruption risk without touching admin-password behavior",
+      "tasks": [
+        {
+          "id": "P1-T1",
+          "title": "Fix save_users_data() delete-all pattern with transactional upsert",
+          "type": "code",
+          "risk": "medium",
+          "files": [
+            "logic.py"
+          ],
+          "preconditions": [
+            "P0 quality gates satisfied"
+          ],
+          "steps": [
+            "Locate save_users_data()",
+            "Start a DB transaction",
+            "For each user row: update existing by id/username or insert new",
+            "Do not delete all users; keep deletions as explicit separate action",
+            "On any exception: rollback and surface error"
+          ],
+          "acceptance_criteria": [
+            "Existing users remain after save",
+            "Forced exception mid-save leaves users unchanged (rollback)",
+            "Smoke test passes"
+          ],
+          "rollback": [
+            "git revert commit",
+            "Restore DB snapshot if needed"
+          ]
+        },
+        {
+          "id": "P1-T2",
+          "title": "Remove dead code only if unreferenced",
+          "type": "code",
+          "risk": "low",
+          "files": [
+            "logic.py",
+            "app/**"
+          ],
+          "steps": [
+            "Identify dead code stubs flagged in review",
+            "Search for references before deletion",
+            "Remove only if truly unused",
+            "Run smoke test"
+          ],
+          "acceptance_criteria": [
+            "No ImportError",
+            "Smoke test passes",
+            "App still runs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "name": "UX Improvements (Feature-flagged)",
+      "objective": "Ship low-risk UX upgrades behind APP_UX_V2",
+      "tasks": [
+        {
+          "id": "P2-T1",
+          "title": "Introduce APP_UX_V2 feature flag",
+          "type": "code",
+          "risk": "low",
+          "files": [
+            "app_dash.py",
+            "app/layouts/**",
+            "app/callbacks/**"
+          ],
+          "steps": [
+            "Read APP_UX_V2 from environment",
+            "Gate new UX elements behind the flag",
+            "Default flag off"
+          ],
+          "acceptance_criteria": [
+            "Flag off: UI unchanged",
+            "Flag on: new UX appears",
+            "Smoke test passes"
+          ]
+        },
+        {
+          "id": "P2-T2",
+          "title": "Make dropdowns searchable",
+          "type": "code",
+          "risk": "low",
+          "files": [
+            "app/layouts/**",
+            "app/ui/**"
+          ],
+          "steps": [
+            "Set searchable=True on all dcc.Dropdown components"
+          ],
+          "acceptance_criteria": [
+            "Dropdowns filter as you type",
+            "Selections still save correctly"
+          ]
+        },
+        {
+          "id": "P2-T3",
+          "title": "Replace date text inputs with DatePickerSingle (no storage format change)",
+          "type": "code",
+          "risk": "medium",
+          "files": [
+            "app/layouts/**",
+            "app/callbacks/**",
+            "logic.py"
+          ],
+          "steps": [
+            "Add DatePickerSingle inputs for relevant date fields",
+            "Add centralized conversion helpers: ui_date_to_storage / storage_to_ui_date",
+            "Keep DB representation unchanged for this phase",
+            "Handle None/empty safely"
+          ],
+          "acceptance_criteria": [
+            "Create/edit booking dates works",
+            "Existing dates display correctly",
+            "Invalid dates cannot be saved"
+          ],
+          "rollback": [
+            "Disable APP_UX_V2",
+            "git revert commit if required"
+          ]
+        },
+        {
+          "id": "P2-T4",
+          "title": "Add save success toast/snackbar",
+          "type": "code",
+          "risk": "low",
+          "files": [
+            "app/layouts/**",
+            "app/callbacks/**"
+          ],
+          "steps": [
+            "Add toast component",
+            "Trigger toast on successful save operations"
+          ],
+          "acceptance_criteria": [
+            "Toast appears after save",
+            "No callback output mismatches"
+          ]
+        },
+        {
+          "id": "P2-T5",
+          "title": "Add booking status field (soft default)",
+          "type": "code",
+          "risk": "medium",
+          "files": [
+            "models.py",
+            "logic.py",
+            "app/layouts/**",
+            "app/callbacks/**"
+          ],
+          "steps": [
+            "Add status in UI and persist for new records",
+            "Default missing status to 'Active' in read path",
+            "Do not enforce DB constraints yet"
+          ],
+          "acceptance_criteria": [
+            "Existing bookings show 'Active' when status missing",
+            "New bookings can set status",
+            "Finance totals unchanged"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P3",
+      "name": "Maintainability: Split logic.py safely",
+      "objective": "Reduce monolith risk with facade/strangler pattern (behavior unchanged)",
+      "strategy": "Create app/domain modules; move one domain at a time; keep logic.py API stable via re-exports",
+      "tasks": [
+        {
+          "id": "P3-T0",
+          "title": "Create app/domain skeleton",
+          "type": "code",
+          "risk": "low",
+          "files": [
+            "app/domain/__init__.py",
+            "app/domain/auth.py",
+            "app/domain/customers.py",
+            "app/domain/dresses.py",
+            "app/domain/bookings.py",
+            "app/domain/payments.py",
+            "app/domain/services.py"
+          ],
+          "steps": [
+            "Create modules with placeholders only (no behavior change)"
+          ],
+          "acceptance_criteria": [
+            "App imports cleanly",
+            "Smoke test passes"
+          ]
+        },
+        {
+          "id": "P3-T1",
+          "title": "Move auth helpers to app/domain/auth.py; re-export from logic.py",
+          "type": "code",
+          "risk": "medium",
+          "files": [
+            "logic.py",
+            "app/domain/auth.py"
+          ],
+          "steps": [
+            "Move password hashing/verification and auth-related helpers",
+            "In logic.py: from app.domain.auth import <functions>",
+            "Keep signatures unchanged"
+          ],
+          "acceptance_criteria": [
+            "Login works",
+            "Smoke test passes"
+          ]
+        },
+        {
+          "id": "P3-T2",
+          "title": "Move customers CRUD to app/domain/customers.py; re-export",
+          "type": "code",
+          "risk": "medium",
+          "files": [
+            "logic.py",
+            "app/domain/customers.py"
+          ],
+          "steps": [
+            "Move add/update/delete customer and validation",
+            "Keep existing behaviors unchanged (including name-based linking for now)",
+            "Re-export from logic.py"
+          ],
+          "acceptance_criteria": [
+            "Customers CRUD works",
+            "Smoke test passes"
+          ]
+        },
+        {
+          "id": "P3-T3",
+          "title": "Move dresses logic to app/domain/dresses.py; re-export",
+          "type": "code",
+          "risk": "medium",
+          "files": [
+            "logic.py",
+            "app/domain/dresses.py"
+          ],
+          "steps": [
+            "Move dress CRUD and image save helpers",
+            "Re-export from logic.py"
+          ],
+          "acceptance_criteria": [
+            "Dress CRUD works",
+            "Images still load",
+            "Smoke test passes"
+          ]
+        },
+        {
+          "id": "P3-T4",
+          "title": "Move bookings logic to app/domain/bookings.py; re-export",
+          "type": "code",
+          "risk": "high",
+          "files": [
+            "logic.py",
+            "app/domain/bookings.py"
+          ],
+          "steps": [
+            "Move booking CRUD and calculations",
+            "Keep ID generation behavior unchanged until P4",
+            "Re-export from logic.py"
+          ],
+          "acceptance_criteria": [
+            "Bookings CRUD works",
+            "Finance totals unchanged",
+            "Smoke test passes"
+          ]
+        },
+        {
+          "id": "P3-T5",
+          "title": "Move payments logic to app/domain/payments.py; re-export",
+          "type": "code",
+          "risk": "high",
+          "files": [
+            "logic.py",
+            "app/domain/payments.py"
+          ],
+          "steps": [
+            "Move payment CRUD and validation",
+            "Re-export from logic.py"
+          ],
+          "acceptance_criteria": [
+            "Payments CRUD works",
+            "Finance totals unchanged",
+            "Smoke test passes"
+          ]
+        },
+        {
+          "id": "P3-T6",
+          "title": "Reduce logic.py to thin facade (<200 lines target)",
+          "type": "code",
+          "risk": "medium",
+          "files": [
+            "logic.py"
+          ],
+          "steps": [
+            "Remove duplicated implementations already moved",
+            "Keep only imports/re-exports and shared tiny helpers"
+          ],
+          "acceptance_criteria": [
+            "logic.py size reduced significantly",
+            "App still runs",
+            "Smoke test passes"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P4",
+      "name": "Performance + Data Integrity (Incremental)",
+      "objective": "Improve scaling and prepare safe migrations",
+      "tasks": [
+        {
+          "id": "P4-T1",
+          "title": "Replace sequential ID full scans with SELECT MAX(id) aggregate query",
+          "type": "code",
+          "risk": "medium",
+          "files": [
+            "app/domain/customers.py",
+            "app/domain/services.py",
+            "app/domain/bookings.py",
+            "app/domain/payments.py"
+          ],
+          "preconditions": [
+            "pytest baseline passing"
+          ],
+          "steps": [
+            "Replace any 'load all rows then max()' with aggregate max query",
+            "Add basic uniqueness guard for single-process usage"
+          ],
+          "acceptance_criteria": [
+            "Inserts faster on large dataset",
+            "IDs remain unique in normal usage",
+            "Tests pass"
+          ]
+        },
+        {
+          "id": "P4-T2",
+          "title": "Implement TTL cache for load_data() with invalidation on writes",
+          "type": "code",
+          "risk": "medium",
+          "files": [
+            "logic.py",
+            "app/domain/**"
+          ],
+          "steps": [
+            "Add in-memory cache per entity with timestamps",
+            "TTL default 2 seconds",
+            "Invalidate relevant keys after create/update/delete"
+          ],
+          "acceptance_criteria": [
+            "No stale data after writes",
+            "Repeated loads are faster",
+            "Smoke test passes"
+          ]
+        },
+        {
+          "id": "P4-T3",
+          "title": "Add pytest baseline (unit + integration)",
+          "type": "code",
+          "risk": "medium",
+          "files": [
+            "requirements_dash.txt",
+            "tests/**"
+          ],
+          "steps": [
+            "Add pytest + pytest-cov",
+            "Add SQLite in-memory fixtures",
+            "Add unit tests for hashing/phone/money validation",
+            "Add integration test: booking -> payment linkage and totals"
+          ],
+          "acceptance_criteria": [
+            "pytest passes",
+            "Core flow tests exist",
+            "CI-ready structure"
+          ]
+        },
+        {
+          "id": "P4-T4",
+          "title": "Backfill scripts for FK readiness (no enforcement yet)",
+          "type": "code",
+          "risk": "high",
+          "files": [
+            "scripts/backfill_customer_id.py"
+          ],
+          "preconditions": [
+            "pytest passing",
+            "DB snapshot created"
+          ],
+          "steps": [
+            "Generate backfill mapping from customer_name to customer_id",
+            "Update bookings with missing customer_id",
+            "Produce unresolved report (CSV/JSON)",
+            "Do not enforce NOT NULL / FK in this task"
+          ],
+          "acceptance_criteria": [
+            "Backfill runs",
+            "Unresolved report produced",
+            "No schema constraints changed"
+          ]
+        }
+      ]
+    }
+  ],
+  "runbook": {
+    "per_commit_checks": [
+      "python scripts/smoke_test.py",
+      "Launch app and verify login + one CRUD screen",
+      "If booking/payment touched: verify finance totals on known dataset"
+    ],
+    "release_checks": [
+      "git tag before release",
+      "Create DB snapshot",
+      "pytest",
+      "Deploy",
+      "Enable APP_UX_V2 gradually"
+    ],
+    "rollback": [
+      "Stop app",
+      "Restore DB/images from snapshot",
+      "git checkout previous tag",
+      "Start app",
+      "Run smoke test"
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+dash
+dash-bootstrap-components
+dash-ag-grid
+pandas
+plotly
+openpyxl
+Pillow
+sqlalchemy
+psycopg2-binary
+pytest
+pytest-cov

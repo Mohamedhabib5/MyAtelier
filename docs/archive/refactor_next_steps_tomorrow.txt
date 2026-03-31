@@ -1,0 +1,63 @@
+MyAtelier Modularization Plan (Execution Status)
+Updated: Tuesday, February 17, 2026
+
+STATUS: Historical working note.
+This file is an archived execution note from an earlier refactor phase.
+For the current application state, use docs/01_overview.md through docs/06_developer_reference.md.
+
+Objective
+- Keep `app_dash.py` as thin entrypoint.
+- Move feature code to stable modules to reduce merge conflicts.
+- Preserve behavior while extracting.
+
+Current Status (Actual)
+- Completed: callbacks are registered through `app/callbacks/register_all.py`.
+- Completed: feature callbacks exist in dedicated modules under `app/callbacks/`.
+- Completed: feature layouts moved to `app/layouts/` (`finance`, `customers`, `bookings`, `services`, `dresses`, `payments`, `settings`, `users`, `login`, `main`, `root`).
+- Completed: table content builders moved to `app/table_content/` with a factory in `app/table_content/factory.py`.
+- Completed: shared table rendering logic centralized in `app/ui/grid.py`.
+- Completed: text helpers moved to `app/text_utils.py`.
+- Completed: runtime composition layer added:
+  - `app/composition/layout_factory.py`
+  - `app/composition/wiring.py`
+- Completed: app creation unified through `app/bootstrap.py`.
+- In progress: final entrypoint slimming and documentation closeout.
+
+Required Validation After Every Step
+1) python -m py_compile app_dash.py logic.py models.py
+2) python -c "import app_dash; print('callbacks', len(app_dash.app.callback_map))"
+3) python scripts\health_check.py
+4) python app_dash.py and verify http://127.0.0.1:8050
+5) If UI flow changed: run targeted browser check (or python scripts\e2e_playwright.py when needed)
+
+Finalization Plan (Remaining)
+Phase 1 - Entrypoint Final Cleanup
+1) Remove remaining non-essential comments/legacy markers from `app_dash.py`.
+2) Keep only entrypoint responsibilities:
+   - app/server creation
+   - root layout assignment
+   - runtime wiring acquisition
+   - callback registration
+   - app run
+3) Ensure imports in `app_dash.py` are minimal and used.
+
+Phase 2 - Dependency Integrity
+1) Audit imports between `app_dash.py`, `app/composition/*`, `app/layouts/*`, `app/callbacks/*`, `app/table_content/*`, `logic.py`.
+2) Confirm no circular imports.
+3) Confirm composition modules do not leak feature logic back into entrypoint.
+
+Phase 3 - Documentation Closeout
+1) Update docs with final module map and responsibilities.
+2) Add “where to edit” guidance for each feature area.
+3) Add regression checklist for future refactor-safe changes.
+
+Phase 4 - Final QA Gate
+1) Run full validation set (compile, callbacks count, health check, run check).
+2) Run E2E if UI paths changed.
+3) Publish final closure report (PASS/FAIL + residual risks).
+
+Definition Of Done
+- `app_dash.py` is an operational entrypoint only (no large feature bodies).
+- Feature logic remains isolated in module layers (`callbacks`, `layouts`, `table_content`, `composition`).
+- Same runtime behavior is preserved (callbacks count and health checks remain stable).
+- Documentation reflects actual architecture and maintenance workflow.

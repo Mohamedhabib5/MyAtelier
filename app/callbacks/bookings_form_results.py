@@ -1,0 +1,215 @@
+import dash_bootstrap_components as dbc
+from dash import html, no_update
+
+from app.callbacks.feedback import success_toast
+
+
+def build_booking_add_modal_result(customer_options, dress_options, today_iso):
+    return (
+        True,
+        "تسجيل حجز جديد",
+        None,
+        None,
+        None,
+        None,
+        today_iso,
+        None,
+        None,
+        "",
+        today_iso,
+        None,
+        False,
+        customer_options,
+        [],
+        dress_options,
+        {"display": "none"},
+        "",
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+    )
+
+
+def build_booking_edit_modal_result(record, booking_columns, search_value, customer_options, edit_context):
+    return (
+        True,
+        f"تعديل حجز: {record[booking_columns[0]]}",
+        record[booking_columns[3]],
+        record[booking_columns[2]],
+        record[booking_columns[4]],
+        record[booking_columns[5]],
+        record[booking_columns[6]],
+        record[booking_columns[7]],
+        record[booking_columns[8]],
+        record[booking_columns[10]],
+        record[booking_columns[1]],
+        search_value,
+        False,
+        customer_options,
+        edit_context["service_options"],
+        edit_context["dress_options"],
+        edit_context["dress_style"],
+        "",
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+    )
+
+
+def build_booking_missing_fields_result():
+    return (
+        True,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        False,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        dbc.Alert("⚠️ بيانات ناقصة", color="warning"),
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+    )
+
+
+def build_booking_save_success_result(mode, today_iso, table_content):
+    if mode == "edit":
+        return (
+            False,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            None,
+            None,
+            False,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            "",
+            table_content,
+            None,
+            *success_toast("تم تعديل الحجز بنجاح"),
+        )
+    return (
+        False,
+        no_update,
+        None,
+        None,
+        None,
+        None,
+        today_iso,
+        None,
+        None,
+        "",
+        today_iso,
+        None,
+        False,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        "",
+        table_content,
+        None,
+        *success_toast("تم حفظ الحجز بنجاح"),
+    )
+
+
+def build_booking_save_error_result(alert):
+    return (
+        True,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        False,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        alert,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+    )
+
+
+def build_booking_delete_success_result(table_content):
+    return (
+        False,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        None,
+        False,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        "",
+        table_content,
+        None,
+        *success_toast("✅ تم حذف الحجز بنجاح"),
+    )
+
+
+def build_booking_delete_issue_result(alert, table_content):
+    return (
+        False,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        False,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        "",
+        html.Div([alert, table_content]),
+        no_update,
+        no_update,
+        no_update,
+    )
